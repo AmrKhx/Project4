@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "790505214547",
+    "project_id": "skilful-sphere-367418",
+    "storage_bucket": "skilful-sphere-367418.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:790505214547:android:d672735d154fc248cc2ca6",
+        "android_client_info": {
+          "package_name": "com.udacity.project4"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "790505214547-sd5m8dgek4pgk0cnt7n8mgu7strrd6vl.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyACoBPh6epMlxtrjB5uB3SZF5CIpZD_coc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "790505214547-sd5m8dgek4pgk0cnt7n8mgu7strrd6vl.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
