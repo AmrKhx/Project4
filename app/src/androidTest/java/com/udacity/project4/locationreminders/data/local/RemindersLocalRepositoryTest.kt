@@ -1,19 +1,18 @@
 package com.udacity.project4.locationreminders.data.local
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
-import androidx.room.Room
-import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.MediumTest
+import com.google.common.truth.Truth.assertThat
+import com.udacity.project4.FakeDataSourceDao
+import com.udacity.project4.MainCoroutineRule
 import com.udacity.project4.locationreminders.data.dto.ReminderDTO
 import com.udacity.project4.locationreminders.data.dto.Result
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.runBlocking
-import org.hamcrest.CoreMatchers.`is`
-import org.hamcrest.CoreMatchers.instanceOf
-import org.hamcrest.MatcherAssert.assertThat
-import org.junit.After
+import kotlinx.coroutines.test.runBlockingTest
+import org.hamcrest.CoreMatchers
+import org.junit.Assert
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -25,6 +24,101 @@ import org.junit.runner.RunWith
 @MediumTest
 class RemindersLocalRepositoryTest {
 
-//    TODO: Add testing implementation to the RemindersLocalRepository.kt
+//    DONE: Add testing implementation to the RemindersLocalRepository.kt
 
+    @get:Rule
+    var instantExecutorRule = InstantTaskExecutorRule()
+
+    @get:Rule
+    var mainCoroutineRule = MainCoroutineRule()
+
+    val list =  listOf<ReminderDTO>(ReminderDTO("title", "description","location",(-360..360).random().toDouble(),(-360..360).random().toDouble()),
+        ReminderDTO("title", "description","location",(-360..360).random().toDouble(),(-360..360).random().toDouble()),
+        ReminderDTO("title", "description","location",(-360..360).random().toDouble(),(-360..360).random().toDouble()),
+        ReminderDTO("title", "description","location",(-360..360).random().toDouble(),(-360..360).random().toDouble()))
+
+    private val reminder1 = list[0]
+    private val reminder2 = list[1]
+    private val reminder3 = list[2]
+
+    private val newReminder = list[3]
+
+    private lateinit var fakeDataSource: FakeDataSourceDao
+    private lateinit var remindersLocalRepository: RemindersLocalRepository
+
+    @Before
+    fun setup() {
+        fakeDataSource = FakeDataSourceDao()
+        remindersLocalRepository = RemindersLocalRepository(
+            fakeDataSource, Dispatchers.Unconfined
+        )
+    }
+
+    @Test
+    fun savesToLocalCache() = runBlockingTest {
+        var list = mutableListOf<ReminderDTO>()
+        list.addAll(fakeDataSource.reminderData.values)
+        // Make sure newReminder is not in the local datasources or cache
+        assertThat(list).doesNotContain(newReminder)
+        assertThat((remindersLocalRepository.getReminders() as? Result.Success)?.data).doesNotContain(
+            newReminder
+        )
+
+        // When a reminder is saved to the tasks repository
+        remindersLocalRepository.saveReminder(newReminder)
+
+        list = mutableListOf()
+        list.addAll(fakeDataSource.reminderData.values)
+        // Then the local sources are called and the cache is updated
+        assertThat(list).contains(newReminder)
+
+        val result = remindersLocalRepository.getReminders() as? Result.Success
+        assertThat(result?.data).contains(newReminder)
+    }
+
+    @Test
+    fun getReminderByIdThatExistsInLocalCache() = runBlockingTest {
+        // Make sure newReminder is not in the local cache
+        assertThat((remindersLocalRepository.getReminder(reminder1.id) as? Result.Error)?.message).isEqualTo(
+            "Reminder not found!")
+
+        fakeDataSource.reminderData[reminder1.id] = reminder1
+
+        // When reminder is fetch by id
+        val loadedReminder = (remindersLocalRepository.getReminder(reminder1.id) as? Result.Success)?.data
+
+        Assert.assertThat<ReminderDTO>(loadedReminder as ReminderDTO, CoreMatchers.notNullValue())
+        Assert.assertThat(loadedReminder.id, CoreMatchers.`is`(reminder1.id))
+        Assert.assertThat(loadedReminder.title, CoreMatchers.`is`(reminder1.title))
+        Assert.assertThat(loadedReminder.description, CoreMatchers.`is`(reminder1.description))
+        Assert.assertThat(loadedReminder.location, CoreMatchers.`is`(reminder1.location))
+        Assert.assertThat(loadedReminder.latitude, CoreMatchers.`is`(reminder1.latitude))
+        Assert.assertThat(loadedReminder.longitude, CoreMatchers.`is`(reminder1.longitude))
+    }
+
+    @Test
+    fun getReminderByIdThatDoesNotExistInLocalCache() = runBlockingTest {
+
+        val message = (remindersLocalRepository.getReminder(reminder1.id) as? Result.Error)?.message
+        Assert.assertThat<String>(message, CoreMatchers.notNullValue())
+        assertThat(message).isEqualTo("Reminder does not exist !")
+
+    }
+
+    @Test
+    fun deleteAllReminders_EmptyListFetchedFromLocalCache() = runBlockingTest {
+        assertThat((remindersLocalRepository.getReminders() as? Result.Success)?.data).isEmpty()
+
+        fakeDataSource.reminderData[reminder1.id] = reminder1
+        fakeDataSource.reminderData[reminder2.id] = reminder2
+        fakeDataSource.reminderData[reminder3.id] = reminder3
+
+        // When - reminders are fetched from  repository - should not be empty
+        assertThat((remindersLocalRepository.getReminders() as? Result.Success)?.data).isNotEmpty()
+
+        remindersLocalRepository.deleteAllReminders()
+
+        // Then - fetching should return empty list
+        assertThat((remindersLocalRepository.getReminders() as? Result.Success)?.data).isEmpty()
+    }
 }
