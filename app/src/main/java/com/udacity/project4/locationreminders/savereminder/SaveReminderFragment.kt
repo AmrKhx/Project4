@@ -1,15 +1,23 @@
 package com.udacity.project4.locationreminders.savereminder
 
 import GeofenceHelper
+import android.annotation.SuppressLint
+import android.app.PendingIntent
 import android.os.Bundle
 import android.text.TextUtils
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.databinding.DataBindingUtil
 import androidx.navigation.findNavController
+import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingClient
+import com.google.android.gms.location.GeofencingRequest
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.tasks.OnFailureListener
+import com.google.android.gms.tasks.OnSuccessListener
 import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
 import com.udacity.project4.base.NavigationCommand
@@ -80,4 +88,31 @@ class SaveReminderFragment : BaseFragment() {
         //make sure to clear the view model after destroy, as it's a single view model.
         _viewModel.onClear()
     }
+    @SuppressLint("MissingPermission")
+
+    private fun addGeofence(
+        latLng: LatLng,
+        radius: Float,
+        geofenceId: String) {
+        val geofence: Geofence = geofenceHelper.getGeofence(
+            geofenceId,
+            latLng,
+            radius,
+            Geofence.GEOFENCE_TRANSITION_ENTER or Geofence.GEOFENCE_TRANSITION_EXIT
+        )
+        val geofencingRequest: GeofencingRequest = geofenceHelper.getGeofencingRequest(geofence)
+        val pendingIntent: PendingIntent? = geofenceHelper.getGeofencePendingIntent()
+        geofencingClient.addGeofences(geofencingRequest, pendingIntent)
+            .addOnSuccessListener(OnSuccessListener<Void?> {
+                // Toast.makeText(context,"geofence added",Toast.LENGTH_LONG).show()
+                Log.d("SaveReminderFragment", "Geofence Added")
+            })
+            .addOnFailureListener(OnFailureListener { e ->
+                val errorMessage: String = geofenceHelper.getErrorString(e)
+                Toast.makeText(context, "Please give background location permission", Toast.LENGTH_LONG).show()
+                Log.d("SaveReminderFragment", "fail in creating geofence: $errorMessage")
+            })
+    }
+
 }
+
