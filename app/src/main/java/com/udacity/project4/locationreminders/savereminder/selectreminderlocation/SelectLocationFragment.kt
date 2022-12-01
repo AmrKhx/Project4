@@ -109,7 +109,27 @@ class SelectLocationFragment : BaseFragment() {
         }
         else -> super.onOptionsItemSelected(item)
     }
+    override fun onMapReady(p0: GoogleMap) {
+        map = p0
+        setPoiClick(map)
+        //        DONE: add style to the map
+        setMapStyle(map)
+        locationPermission()
+    }
 
+    private fun setPoiClick(map: GoogleMap) {
+        map.setOnPoiClickListener {
+            val poiMarker = map.addMarker(MarkerOptions().position(it.latLng).title(it.name))
+            map.moveCamera(CameraUpdateFactory.newLatLngZoom(it.latLng, DEFAULT_ZOOM_LEVEL))
+            poiMarker.showInfoWindow()
+            Poi = it
+            lat = it.latLng.latitude
+            long = it.latLng.longitude
+            title = it.name
+        }
+        isLocationSelected = true
+
+    }
 
 
 }
