@@ -130,6 +130,96 @@ class SelectLocationFragment : BaseFragment() {
         isLocationSelected = true
 
     }
+    private fun setMapStyle(map: GoogleMap) {
+        try {
+            // Customize the styling of the base map using a JSON object defined
+            // in a raw resource file.
+            val success = map.setMapStyle(
+                MapStyleOptions.loadRawResourceStyle(
+                    context,
+                    R.raw.map_styles
+                )
+            )
+
+            if (!success) {
+                Toast.makeText(context, "Style parsing failed.", Toast.LENGTH_LONG).show()
+            }
+        } catch (e: Resources.NotFoundException) {
+            Toast.makeText(context, "error $e", Toast.LENGTH_LONG).show()
+        }
+    }
+    private fun isPermissionGranted() : Boolean {
+        return ContextCompat.checkSelfPermission(
+            requireActivity(),
+            Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun locationPermission() {
+
+        if (ContextCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) ==
+            PackageManager.PERMISSION_GRANTED &&
+            ContextCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) ==
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            map.isMyLocationEnabled = true
+
+        }
+        else {
+            this.requestPermissions(
+                arrayOf<String>(Manifest.permission.ACCESS_FINE_LOCATION),
+                REQUEST_LOCATION_PERMISSION
+            )
+        }
+        map.moveCamera(CameraUpdateFactory.zoomIn())
+
+    }
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == REQUEST_CODE_BACKGROUND) {
+            localLocationSet()
+        }
+    }
+    private fun localLocationSet(resolve: Boolean = true){
+        val locReq = LocationRequest.create().apply {
+            priority = LocationRequest.PRIORITY_LOW_POWER
+        }
+        val requestBuilder = LocationSettingsRequest.Builder().addLocationRequest(locReq)
+        val settingsClient = LocationServices.getSettingsClient(activity!!)
+        val locationSettingsResponseTask =
+            settingsClient.checkLocationSettings(requestBuilder.build())
+        locationSettingsResponseTask.addOnFailureListener { exception ->
+            if (exception is ResolvableApiException && resolve) {
+                try {
+                    exception.startResolutionForResult(
+                        activity!!,
+                        REQUEST_TURN_DEVICE_LOCATION_ON
+                    )
+                } catch (sendEx: IntentSender.SendIntentException) {
+                    Log.d("Select Location", "Error getting location settings resolution: " + sendEx.message)
+                }
+            } else {
+                Snackbar.make(
+                    view!!,
+                    R.string.location_required_error, Snackbar.LENGTH_INDEFINITE
+                ).setAction(android.R.string.ok) {
+                    localLocationSet()
+                }.show()
+            }
+
+        }}
+
+
+}
 
 
 }
