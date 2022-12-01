@@ -12,9 +12,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.databinding.DataBindingUtil
 import androidx.navigation.findNavController
-import com.google.android.gms.location.Geofence
-import com.google.android.gms.location.GeofencingClient
-import com.google.android.gms.location.GeofencingRequest
+import com.google.android.gms.location.*
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.tasks.OnFailureListener
 import com.google.android.gms.tasks.OnSuccessListener
@@ -50,9 +48,14 @@ class SaveReminderFragment : BaseFragment() {
         return binding.root
     }
 
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding.lifecycleOwner = this
+
+        geofencingClient = LocationServices.getGeofencingClient(context!!)
+        geofenceHelper = GeofenceHelper(context)
+
         binding.selectLocation.setOnClickListener {
             //            Navigate to another fragment to get the user location
             _viewModel.navigationCommand.value =
@@ -61,13 +64,15 @@ class SaveReminderFragment : BaseFragment() {
 
         binding.saveReminder.setOnClickListener {
             val title = _viewModel.reminderTitle.value
-            val description = _viewModel.reminderDescription
+            val description = _viewModel.reminderDescription.value
             val location = _viewModel.reminderSelectedLocationStr.value
-            val latitude = _viewModel.latitude
+            val latitude = _viewModel.latitude.value
             val longitude = _viewModel.longitude.value
             val geofenceId = UUID.randomUUID().toString()
 
-
+//            DONE: use the user entered reminder details to:
+//             1) add a geofencing request
+//             2) save the reminder to the local db
             if (latitude != null && longitude != null && !TextUtils.isEmpty(title))
                 addGeofence(LatLng(latitude, longitude), GEOFENCE_RADIUS, geofenceId)
 
@@ -87,9 +92,10 @@ class SaveReminderFragment : BaseFragment() {
         super.onDestroy()
         //make sure to clear the view model after destroy, as it's a single view model.
         _viewModel.onClear()
-    }
-    @SuppressLint("MissingPermission")
 
+    }
+
+    @SuppressLint("MissingPermission")
     private fun addGeofence(
         latLng: LatLng,
         radius: Float,
@@ -115,4 +121,3 @@ class SaveReminderFragment : BaseFragment() {
     }
 
 }
-
