@@ -11,9 +11,9 @@ import android.os.Bundle
 import android.util.Log
 import android.view.*
 import android.widget.Toast
+import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
-import androidx.lifecycle.Transformations.map
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
@@ -31,11 +31,11 @@ import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
 import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
 import org.koin.android.ext.android.inject
 
-
 private const val REQUEST_CODE_BACKGROUND = 102929
 private const val REQUEST_TURN_DEVICE_LOCATION_ON = 12433
 private const val DEFAULT_ZOOM_LEVEL =15f
-class SelectLocationFragment : BaseFragment() {
+
+class SelectLocationFragment : BaseFragment() , OnMapReadyCallback {
 
     //Use Koin to get the view model of the SaveReminder
     override val _viewModel: SaveReminderViewModel by inject()
@@ -59,8 +59,11 @@ class SelectLocationFragment : BaseFragment() {
         setHasOptionsMenu(true)
         setDisplayHomeAsUpEnabled(true)
 
-       val mapFrag = childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
-      mapFrag.getMapAsync(this)
+
+        val mapFrag = childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
+        mapFrag.getMapAsync(this)
+
+
         binding.savebut.setOnClickListener {
             if (Poi != null) {
                 onLocationSelected()
@@ -68,6 +71,7 @@ class SelectLocationFragment : BaseFragment() {
                 Toast.makeText(context, "Select the wanted location!", Toast.LENGTH_LONG).show()
             }
         }
+
         return binding.root
     }
 
@@ -109,6 +113,7 @@ class SelectLocationFragment : BaseFragment() {
         }
         else -> super.onOptionsItemSelected(item)
     }
+
     override fun onMapReady(p0: GoogleMap) {
         map = p0
         setPoiClick(map)
@@ -130,6 +135,7 @@ class SelectLocationFragment : BaseFragment() {
         isLocationSelected = true
 
     }
+
     private fun setMapStyle(map: GoogleMap) {
         try {
             // Customize the styling of the base map using a JSON object defined
@@ -217,9 +223,6 @@ class SelectLocationFragment : BaseFragment() {
             }
 
         }}
-
-
-}
 
 
 }
